@@ -7,7 +7,10 @@
  */
 
 import React from 'react';
-import type {Node} from 'react';
+import Realm from 'realm';
+
+import { RealmProvider, useRealm, useObject, useQuery } from './RealmContext';
+
 import {
   SafeAreaView,
   ScrollView,
@@ -15,97 +18,87 @@ import {
   StyleSheet,
   Text,
   useColorScheme,
+  Button,
+  TextInput,
   View,
 } from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+// function MyComponent({someId}){
+// 	const realm = useRealm();
+// 	const {data: tasks, error: tasksError} = useQuery<Task>('Task');
+// 	const {data: someObject, error: someObjectError} = useQuery<SomeObject>('Objects');
 
-const Section = ({children, title}): Node => {
-  const isDarkMode = useColorScheme() === 'dark';
+// 	if(tasksError || someObjectError){
+// 		console.error(`${tasksError} ${someObjectError});
+// 		return null
+// 	}
+
+// 	return ...
+// }
+
+const CoolComponent = () => {
+  const [taskInputValue, onChangeText] = React.useState();
+
+  const realm = useRealm();
+
+  const tasks = useQuery<Task>('Task').data || [];
+  const tasksError = useQuery<Task>('Task').error;
+
+  if (tasksError) {
+    console.error(`${tasksError}`);
+  }
+
+  const createTask = () => {
+    realm.write(() => {
+      realm.create('Task', {
+        _id: new Realm.BSON.ObjectId(),
+        description: taskInputValue,
+      });
+    });
+  };
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View>
+      <Text>Cool Component Header</Text>
+      <Text>Insert a new task</Text>
+      <TextInput
+        value={taskInputValue}
+        onChangeText={onChangeText}
+        style={styles.input}
+      />
+      <Button onPress={createTask} title="Submit" />
+      {tasks.map(task => (
+        <Text>{task.description}</Text>
+      ))}
     </View>
   );
 };
 
-const App: () => Node = () => {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
+const App = () => {
   return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.js</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
+    <SafeAreaView style={styles.container}>
+      <RealmProvider>
+        <Text style={styles.headerText}>Hello world</Text>
+        <CoolComponent />
+      </RealmProvider>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  sectionContainer: {
+  container: {
     marginTop: 32,
     paddingHorizontal: 24,
+    alignItems: 'center',
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
+  headerText: {
+    fontSize: 42,
   },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
+  input: {
+    height: 40,
+    margin: 12,
+    borderWidth: 1,
+    padding: 10,
   },
 });
 
